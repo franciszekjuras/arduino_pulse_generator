@@ -149,7 +149,7 @@ void identify(SCPI_C commands, SCPI_P parameters, Stream& interface) {
   (void) commands;
   (void) parameters;
   (void) interface;
-  interface.println(F("franciszek\152ura\163\100gmail\056com,Arduino pulse generator,#86,v0.2"));
+  interface.println(F("franciszek\152ura\163\100gmail\056com,Arduino pulse generator,#86,v0.3"));
 }
 
 void fullReset(SCPI_C commands, SCPI_P parameters, Stream& interface){
@@ -158,6 +158,7 @@ void fullReset(SCPI_C commands, SCPI_P parameters, Stream& interface){
   (void) interface;
 
   resetSeq();
+  recallTimeInputMp();
 }
 
 void resetSeq(){  
@@ -230,8 +231,11 @@ void seqAdd(uint8_t ch, int32_t time){
   pos = findPosInSeq(time);
   if(pos < 0)
     return;
-  if(pos != (int)seqLen && times[pos] == time)
-    switches[pos] |= mask;
+  if(pos != (int)seqLen && times[pos] == time){
+    switches[pos] ^= mask;
+    if(switches[pos] == 0)
+      removeFromSeq(pos);
+  }
   else
     insertInSeq(time, mask, pos);  
 }
