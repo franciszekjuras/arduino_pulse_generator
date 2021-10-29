@@ -102,7 +102,7 @@ syst:unit:store
 syst:unit?
 >us
 ```
-If you change it temporarily, you can easily go back to stored value.
+If you change it temporarily, you can easily go back to the stored value.
 ```
 syst:unit cycles
 (do something)
@@ -154,7 +154,7 @@ Now you can call `puls:run` repeatedly without worry. Also, note that you can ch
 
 ---
 
-If you try to create to short pulse, Arduino will refuse to run the sequence.
+If you try to create a too short pulse, Arduino will refuse to run the sequence.
 ```
 syst:unit?
 >us
