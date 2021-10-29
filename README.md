@@ -66,4 +66,112 @@ and zoom into the end of the pulse on port 2. Then execute a second command:
 ```
 The second pulse should be longer than the first one by a single clock cycle. If its shorter, `MILIS_DELAY_CYCLES` constant should be increased, otherwise decreased. Repeat until the difference between pulses' length is exactly of one clock cycle.
 ## Examples
-Work in progress...
+> Lines starting with `>` are example responses from Arduino
+
+Turn off all outputs, next turn ports 2, 3 and 10 on (high state, logical one), then turn off ports 3 and 10 (low state, logical zero) and turn on ports 4 and 11 instead.
+```
+outp:off
+outp:on 2, 3, 10
+outp:off 3, 10
+outp:on 4, 11
+```
+Same result can be obtained using only `OUTPut:XON` command:
+```
+outp:xon 2, 3, 10
+outp:xon 2, 4, 11
+```
+
+---
+
+Before starting specifying pulses, it's important to know the current time unit.
+```
+syst:unit?
+>ms
+```
+You can change it to microseconds (us), miliseconds (ms), seconds (s) or cycles, but using the last option makes your programs less portable, as timing of pulses will change with clock frequency.
+```
+syst:unit us
+syst:unit?
+>us
+```
+To preserve unit between shutdowns (here simulated with `*RST`), you can store it in EEPROM memory.
+```
+syst:unit us
+syst:unit:store
+*RST
+syst:unit?
+>us
+```
+If you change it temporarily, you can easily go back to stored value.
+```
+syst:unit cycles
+(do something)
+syst:unit:rec
+syst:unit?
+>us
+```
+
+---
+
+Let's say you want to create following pulses sequence (notice that time is relative to the beginning of the pulse on port 5).
+```
+PORT      __________       __________ 
+2   _____/          \_____/          \____________
+          ______
+3   _____/      \_________________________________
+                           _______________________                
+5   ______________________/
+    ______________________     ___________________
+8                         \___/
+---------|------|---|-----|---|------|------------->
+       -30     -15 -10.3  0   7.13   14   time (us)
+```
+First, you need to properly set initial states and choose time unit (if you didn't earlier), and clear any previous sequence.
+```
+outp:xon 8
+syst:unit us
+puls:reset
+```
+Next, you can proceed to specifying pulses.
+```
+puls 2, -30, -10.3, 0, 14
+puls 3, -30, -15
+puls 5, 0
+puls 8, 0, 7.13
+```
+Now all you need to is
+```
+puls:run
+```
+A small issue with the above example is that the final state of outputs is not the same as the initial state as port 5 is now in high state. Thus if you repeat `puls:run`, the polarity of the pulse on port 5 will be reversed!
+To solve this problem, you can either write `outp:xon 8` before calling `puls:run` or (more robust solution) add one more state change on port 5. Assuming that after pulses sequence port 5 output must be high for at least second, you can write:
+```
+syst:unit s
+puls 5, 1
+syst:unit us
+```
+Now you can call `puls:run` repeatedly without worry. Also, note that you can change the time unit without affecting previously defined pulses.
+
+---
+
+If you try to create to short pulse, Arduino will refuse to run the sequence.
+```
+syst:unit?
+>us
+puls 2, 0, 1
+puls:run
+>Error: (TIME) Two output value changes are closer than 3.875 us
+```
+You can get similar error if you try to use not existing port, or input improper number. 
+
+---
+
+If `puls:run` returns error, pulses sequence is automatically reset.
+```
+puls 2, not a number, arduino is great
+puls:run 
+>Error: (NAN) Something you sent was not a proper number
+puls 2, 0, 100
+puls:run
+(no error)
+```
