@@ -3,7 +3,7 @@ Arduino pulse generator uses single-cycle accurate delays and direct port writin
 ## Installation
 Just download the code, open `pulsegen.ino` with Arduino IDE and upload the sketch to your board. Use the serial monitor to verify successful upload.
 ## SCPI commands
-`<foo>` -- mandatory part, `[bar]` -- optional part, `{val}` -- optional one or more arguments, `foo|bar|val` -- pick one, `[(foo)|bar]` or `[arg=2]` -- default if ommited.
+`<foo>` – mandatory part, `[bar]` – optional part, `{val}` – optional one or more arguments, `foo|bar|val` – pick one, `[(foo)|bar]` or `[arg=2]` – default if ommited.
 
 - `*IDN?`  
   Identify command. Should return something like `mymail@gmail.com,Arduino pulse generator,#86,v0.2`.
