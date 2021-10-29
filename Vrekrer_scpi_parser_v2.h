@@ -8,8 +8,8 @@ Header file.
 
 
 /// Max branch size of the command tree and max number of parameters.
-#ifndef SCPI_ARRAY_SYZE
-  #define SCPI_ARRAY_SYZE 6
+#ifndef SCPI_ARRAY_SIZE
+  #define SCPI_ARRAY_SIZE 6
 #endif
 
 /// Max number of valid tokens.
@@ -50,7 +50,7 @@ Header file.
   \li \c Last()  : Returns the last value appended to the array.
   \li Indexing (e.g. \c my_array[1] to get the second value of the array).
 
- The max size of the array is defined by \c SCPI_ARRAY_SYZE (default 6).
+ The max size of the array is defined by \c SCPI_ARRAY_SIZE (default 6).
 */
 class SCPI_String_Array {
  public:
@@ -62,7 +62,7 @@ class SCPI_String_Array {
   uint8_t Size();                      //Array size
  protected:
   uint8_t size_ = 0;              //Internal array size
-  char* values_[SCPI_ARRAY_SYZE]; //Storage of the strings
+  char* values_[SCPI_ARRAY_SIZE]; //Storage of the strings
 };
 
 /*!
@@ -181,7 +181,7 @@ char* SCPI_String_Array::operator[](const uint8_t index) {
 
 ///Append new string (LIFO stack Push).
 void SCPI_String_Array::Append(char* value) {
-  if (size_ < SCPI_ARRAY_SYZE) {
+  if (size_ < SCPI_ARRAY_SIZE) {
     values_[size_] = value;
     size_++;
   }

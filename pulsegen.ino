@@ -1,7 +1,9 @@
 #include "Arduino.h"
 #include <EEPROM.h>
-#define SCPI_BUFFER_LENGTH 128
+#define SCPI_BUFFER_LENGTH 254
+#define SCPI_MAX_TOKENS 22
 #define SCPI_ARRAY_SIZE 15
+#define SCPI_MAX_COMMANDS 17
 #include "Vrekrer_scpi_parser_v2.h"
 #include <util/delay_basic.h>
 
@@ -51,26 +53,29 @@ void setup()
   recallTimeInputMp();
   parser.RegisterCommand(F("*IDN?"), &identify);
   parser.RegisterCommand(F("*RST"), &fullReset);
-  //OUTPut:[X]ON <channel>, {channel}
+  //OUTPut:[X]ON <port>, {port}
   parser.RegisterCommand(F("OUTPut:ON"), &outputOn);
   parser.RegisterCommand(F("OUTPut:XON"), &outputOn);
-  //OUTPut:OFF {channel}
+  //OUTPut:OFF {port}
   parser.RegisterCommand(F("OUTPut:OFF"), &outputOff);
   //PULSe:RUN
   parser.RegisterCommand(F("PULSe:RUN"), &pulseRun);
-  //PULSe[:XADD|(ADD)] <channel>, <time>, {time}
+  //PULSe[?]:[(ADD)|XADD] <port>, <time>, {time}
   parser.RegisterCommand(F("PULSe"), &pulseAdd);
   parser.RegisterCommand(F("PULSe?"), &pulseQuery);
   parser.RegisterCommand(F("PULSe:ADD"), &pulseAdd);
   parser.RegisterCommand(F("PULSe:XADD"), &pulseAdd);
-  //PULSe:RESet [channel]
+  //PULSe:RESet [port]
   parser.RegisterCommand(F("PULSe:RESet"), &pulseReset);
   //SYSTem:UNIT[?] <cycle|us|ms|s>
   parser.RegisterCommand(F("SYSTem:UNIT"), &setUnit);
   parser.RegisterCommand(F("SYSTem:UNIT?"), &getUnit);
-  //SYSTem:UNIT[:STORe|RECall]
+  //SYSTem:UNIT:<STORe|RECall>
   parser.RegisterCommand(F("SYSTem:UNIT:STORe"), &storeUnit);
   parser.RegisterCommand(F("SYSTem:UNIT:RECall"), &recallUnit);
+  //PULSe:CALibrate:MILis:[ONE|TWO] [port=2]"
+  parser.RegisterCommand(F("PULSe:CALibrate:MILis:ONE"), &calibMilis);
+  parser.RegisterCommand(F("PULSe:CALibrate:MILis:TWO"), &calibMilis);
   Serial.begin(9600);
 }
 
@@ -405,8 +410,29 @@ void delayMilis(uint16_t& ms){
   }
 }
 
+void calibMilis(SCPI_C commands, SCPI_P parameters, Stream& interface) {
+  (void)  interface;
+  int     ch;
+
+  ch = -1;
+  if(parameters.Size() == 0)
+    ch = 2;
+  else if (parameters.Size() == 1)
+    ch = parseChannel(parameters[0]);
+  if(ch < 0)
+    return;
+
+  int32_t time = (F_CPU / 1000) + DELAY_OFFSET;
+  if(strcasecmp_P(commands.Last(), PSTR("one")) == 0)
+    --time;
+  resetSeq();
+  seqAdd(ch, 0);
+  seqAdd(ch, time);
+  digitalWrite(ch, 0);  
+}
+
+
 void outputOn(SCPI_C commands, SCPI_P parameters, Stream& interface) {
-  (void)  commands;
   (void)  interface;
   int     ch;
 
