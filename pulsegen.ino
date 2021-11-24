@@ -2,7 +2,7 @@
 #include <EEPROM.h>
 #define SCPI_BUFFER_LENGTH 254
 #define SCPI_MAX_TOKENS 22
-#define SCPI_ARRAY_SIZE 15
+#define SCPI_ARRAY_SIZE 30
 #define SCPI_MAX_COMMANDS 17
 #include "Vrekrer_scpi_parser_v2.h"
 #include <util/delay_basic.h>
@@ -76,7 +76,7 @@ void setup()
   //PULSe:CALibrate:MILis:[ONE|TWO] [port=2]"
   parser.RegisterCommand(F("PULSe:CALibrate:MILis:ONE"), &calibMilis);
   parser.RegisterCommand(F("PULSe:CALibrate:MILis:TWO"), &calibMilis);
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop()
@@ -157,6 +157,11 @@ void identify(SCPI_C commands, SCPI_P parameters, Stream& interface) {
   interface.println(F("franciszek\152ura\163\100gmail\056com,Arduino pulse generator,#86,v0.3"));
 }
 
+void resetOutputs(){
+  PORTD &= ~(PORTS_AVAILABLE);
+  PORTB &= ~(PORTS_AVAILABLE >> 8);
+}
+
 void fullReset(SCPI_C commands, SCPI_P parameters, Stream& interface){
   (void) commands;
   (void) parameters;
@@ -164,6 +169,7 @@ void fullReset(SCPI_C commands, SCPI_P parameters, Stream& interface){
 
   resetSeq();
   recallTimeInputMp();
+  resetOutputs();
 }
 
 void resetSeq(){  
@@ -335,14 +341,18 @@ void pulseQuery(SCPI_C commands, SCPI_P parameters, Stream& interface) {
 
   if(seqError)
     printError(interface);
-  else{
-    interface.println(F("Clock cycle   |   Switch mask"));
+  else if((parameters.Size() == 1) && (strcasecmp_P(commands.Last(), PSTR("one")) == 0)){
+    interface.println(F("Cycle,Mask"));
     for(unsigned int i = 0; i < seqLen; ++i){
+      interface.print(F(";"));
       interface.print(times[i]);
-      interface.print(F(": "));
-      interface.println(switches[i], BIN);
+      interface.print(F(","));
+      interface.print(switches[i], BIN);
     }
+    interface.println("");
   }
+  else
+    interface.println("OK");
 }
 
 void pulseRun(SCPI_C commands, SCPI_P parameters, Stream& interface) {
@@ -454,10 +464,9 @@ void outputOff(SCPI_C commands, SCPI_P parameters, Stream& interface) {
   (void)  interface;
   int     ch;
 
-  if (parameters.Size() == 0) {
-    PORTD &= ~(PORTS_AVAILABLE);
-    PORTB &= ~(PORTS_AVAILABLE >> 8);
-  }
+  if (parameters.Size() == 0)
+    resetOutputs();
+
   for(int i = 0; i < parameters.Size(); ++i){
     ch = parseChannel(parameters[i]);
     if(ch > 0){
@@ -479,4 +488,3 @@ void printError(Stream& interface){
   else if(seqError & SEQ_ERR_MEM)
     interface.println(F("Error: (MEM) Somehow you exceeded available memory D:"));
 }
-

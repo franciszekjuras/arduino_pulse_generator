@@ -1,7 +1,8 @@
 # Arduino pulse generator
 Arduino pulse generator uses single-cycle accurate delays and direct port writing to achieve very precise pulses. Pulses sequences are programmed using SCPI communication (thanks to [Vrekrer SCPI parser](https://github.com/Vrekrer/Vrekrer_scpi_parser)) with some extra utilities like changing output states or setting a time unit. Because Arduino is a very simple machine, there are however some [limitations](#limitations).
 ## Installation
-Just download the code, open `pulsegen.ino` with Arduino IDE and upload the sketch to your board. Use the serial monitor to verify successful upload.
+Just download the code, open `pulsegen.ino` with Arduino IDE and upload the sketch to your board. Use the serial monitor to verify successful upload.  
+:information_source: Set baudrate to `115200`
 ## SCPI commands
 `<foo>` – mandatory part, `[bar]` – optional part, `{val}` – optional one or more arguments, `foo|bar|val` – pick one, `[(foo)|bar]` or `[arg=2]` – default if ommited.
 
