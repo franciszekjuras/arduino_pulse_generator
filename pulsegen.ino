@@ -1,9 +1,9 @@
 #include "Arduino.h"
 #include <EEPROM.h>
 #define SCPI_BUFFER_LENGTH 254
-#define SCPI_MAX_TOKENS 22
+#define SCPI_MAX_TOKENS 25
 #define SCPI_ARRAY_SIZE 30
-#define SCPI_MAX_COMMANDS 17
+#define SCPI_MAX_COMMANDS 20
 #include "Vrekrer_scpi_parser_v2.h"
 #include <util/delay_basic.h>
 
@@ -335,37 +335,47 @@ void resetChannel(int ch){
   }
 }
 
-void pulseQuery(SCPI_C commands, SCPI_P parameters, Stream& interface) {
-  (void) commands;
-  (void) parameters;
-
+void printStatus(Stream& interface, bool detailed){
   if(seqError)
     printError(interface);
-  else if((parameters.Size() == 1) && (strcasecmp_P(commands.Last(), PSTR("one")) == 0)){
-    interface.println(F("Cycle,Mask"));
-    for(unsigned int i = 0; i < seqLen; ++i){
-      interface.print(F(";"));
-      interface.print(times[i]);
-      interface.print(F(","));
-      interface.print(switches[i], BIN);
+  else if(detailed){
+    if(seqLen == 0){
+      interface.println(F("WARNING: Nothing to run"));
     }
-    interface.println("");
+    else{
+      interface.println(F("Cycle,Mask"));
+      for(unsigned int i = 0; i < seqLen; ++i){
+        interface.print(F(";"));
+        interface.print(times[i]);
+        interface.print(F(","));
+        interface.print(switches[i], BIN);
+      }
+      interface.println("");
+    }
   }
   else
     interface.println("OK");
 }
 
+void pulseQuery(SCPI_C commands, SCPI_P parameters, Stream& interface) {
+  (void) commands;
+  (void) parameters;
+  if((parameters.Size() == 1) && (strcasecmp_P(parameters.First(), PSTR("-l")) == 0))
+    printStatus(interface, true);
+  else
+    printStatus(interface, false);
+}
 void pulseRun(SCPI_C commands, SCPI_P parameters, Stream& interface) {
   (void) commands;
   (void) parameters;
 
   if(seqError){
-    printError(interface);
+    // printError(interface);
     resetSeq();
     return;
   }
   if(seqLen == 0){
-    interface.println(F("WARNING: Nothing to run"));
+    // interface.println(F("WARNING: Nothing to run"));
     return;
   }
   startVal = PORTB;
